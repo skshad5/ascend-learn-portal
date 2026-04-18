@@ -23,11 +23,17 @@ function CourseDetailPage() {
     queryFn: async () => {
       const { data, error } = await supabase
         .from("courses")
-        .select("*, category:categories(name, slug), instructor:profiles!courses_instructor_id_fkey(full_name, avatar_url)")
+        .select("*, category:categories(name, slug)")
         .eq("id", courseId)
         .maybeSingle();
       if (error) throw error;
-      return data;
+      if (!data) return null;
+      const { data: instructor } = await supabase
+        .from("profiles")
+        .select("full_name, avatar_url")
+        .eq("id", data.instructor_id)
+        .maybeSingle();
+      return { ...data, instructor };
     },
   });
 
