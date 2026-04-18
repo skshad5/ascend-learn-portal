@@ -1,11 +1,13 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { BookOpen, CheckCircle2, ClipboardList, Clock, PlayCircle, Trophy, User, XCircle } from "lucide-react";
+import { Award, BookOpen, CheckCircle2, ClipboardList, Clock, PlayCircle, Trophy, User, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PublicHeader } from "@/components/PublicHeader";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useProfile } from "@/hooks/use-profile";
+import { generateCertificate } from "@/lib/certificate";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/courses/$courseId")({
@@ -17,6 +19,7 @@ function CourseDetailPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
 
   const { data: course, isLoading } = useQuery({
     queryKey: ["course", courseId],
@@ -95,6 +98,23 @@ function CourseDetailPage() {
     },
   });
 
+  const lessonIds = (lessons ?? []).map((l) => l.id);
+  const { data: progress } = useQuery({
+    queryKey: ["course-progress", courseId, user?.id, lessonIds.join(",")],
+    enabled: !!user && lessonIds.length > 0,
+    queryFn: async () => {
+      if (!user || lessonIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("lesson_progress")
+        .select("lesson_id, completed")
+        .eq("user_id", user.id)
+        .eq("completed", true)
+        .in("lesson_id", lessonIds);
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const enroll = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
@@ -148,6 +168,30 @@ function CourseDetailPage() {
       toast.info("Paid checkout coming soon — enrolling for now.");
     }
     enroll.mutate();
+  };
+
+  const completedLessons = (progress ?? []).length;
+  const totalLessons = lessons?.length ?? 0;
+  const allLessonsDone = totalLessons > 0 && completedLessons >= totalLessons;
+  const allQuizzesPassed =
+    (quizzes?.length ?? 0) === 0 ||
+    (quizzes ?? []).every((q) => {
+      const my = (attempts ?? []).filter((a) => a.quiz_id === q.id);
+      if (my.length === 0) return false;
+      const best = my.reduce((m, a) => (a.score > m.score ? a : m));
+      return best.score >= q.passing_score;
+    });
+  const courseComplete = !!enrollment && allLessonsDone && allQuizzesPassed;
+
+  const handleDownloadCertificate = () => {
+    if (!course) return;
+    generateCertificate({
+      studentName: profile?.full_name || user?.email || "Student",
+      courseTitle: course.title,
+      instructorName: course.instructor?.full_name || "Instructor",
+      completionDate: new Date(),
+    });
+    toast.success("Certificate downloaded!");
   };
 
   return (
@@ -273,6 +317,31 @@ function CourseDetailPage() {
                   <Button onClick={handleEnroll} disabled={enroll.isPending} className="mt-4 w-full bg-gradient-primary shadow-glow">
                     {enroll.isPending ? "Enrolling..." : course.is_free ? "Enroll for free" : "Buy course"}
                   </Button>
+                )}
+                {enrollment && (
+                  <div className="mt-4 rounded-lg border border-border/50 bg-muted/30 p-3">
+                    <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Course progress</span>
+                      <span>
+                        {completedLessons}/{totalLessons} lessons
+                        {(quizzes?.length ?? 0) > 0 && ` • ${allQuizzesPassed ? "all" : "not all"} quizzes passed`}
+                      </span>
+                    </div>
+                    {courseComplete ? (
+                      <Button
+                        onClick={handleDownloadCertificate}
+                        variant="outline"
+                        className="w-full border-success/40 bg-success/10 text-success hover:bg-success/15 hover:text-success"
+                      >
+                        <Award className="mr-2 h-4 w-4" />
+                        Download certificate
+                      </Button>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Complete every lesson{(quizzes?.length ?? 0) > 0 ? " and pass every quiz" : ""} to unlock your certificate.
+                      </p>
+                    )}
+                  </div>
                 )}
                 <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2"><Clock className="h-4 w-4" />Lifetime access</li>

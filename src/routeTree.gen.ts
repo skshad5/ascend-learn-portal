@@ -20,6 +20,7 @@ import { Route as StudentProfileRouteImport } from './routes/student.profile'
 import { Route as StudentDashboardRouteImport } from './routes/student.dashboard'
 import { Route as InstructorDashboardRouteImport } from './routes/instructor.dashboard'
 import { Route as InstructorCoursesRouteImport } from './routes/instructor.courses'
+import { Route as InstructorAnalyticsRouteImport } from './routes/instructor.analytics'
 import { Route as CoursesCourseIdRouteImport } from './routes/courses.$courseId'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
@@ -86,6 +87,11 @@ const InstructorDashboardRoute = InstructorDashboardRouteImport.update({
 const InstructorCoursesRoute = InstructorCoursesRouteImport.update({
   id: '/courses',
   path: '/courses',
+  getParentRoute: () => InstructorRoute,
+} as any)
+const InstructorAnalyticsRoute = InstructorAnalyticsRouteImport.update({
+  id: '/analytics',
+  path: '/analytics',
   getParentRoute: () => InstructorRoute,
 } as any)
 const CoursesCourseIdRoute = CoursesCourseIdRouteImport.update({
@@ -165,6 +171,7 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/users': typeof AdminUsersRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
+  '/instructor/analytics': typeof InstructorAnalyticsRoute
   '/instructor/courses': typeof InstructorCoursesRouteWithChildren
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/student/dashboard': typeof StudentDashboardRoute
@@ -190,6 +197,7 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/users': typeof AdminUsersRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
+  '/instructor/analytics': typeof InstructorAnalyticsRoute
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/profile': typeof StudentProfileRoute
@@ -215,6 +223,7 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/users': typeof AdminUsersRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
+  '/instructor/analytics': typeof InstructorAnalyticsRoute
   '/instructor/courses': typeof InstructorCoursesRouteWithChildren
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/student/dashboard': typeof StudentDashboardRoute
@@ -242,6 +251,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/users'
     | '/courses/$courseId'
+    | '/instructor/analytics'
     | '/instructor/courses'
     | '/instructor/dashboard'
     | '/student/dashboard'
@@ -267,6 +277,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/users'
     | '/courses/$courseId'
+    | '/instructor/analytics'
     | '/instructor/dashboard'
     | '/student/dashboard'
     | '/student/profile'
@@ -291,6 +302,7 @@ export interface FileRouteTypes {
     | '/admin/dashboard'
     | '/admin/users'
     | '/courses/$courseId'
+    | '/instructor/analytics'
     | '/instructor/courses'
     | '/instructor/dashboard'
     | '/student/dashboard'
@@ -392,6 +404,13 @@ declare module '@tanstack/react-router' {
       path: '/courses'
       fullPath: '/instructor/courses'
       preLoaderRoute: typeof InstructorCoursesRouteImport
+      parentRoute: typeof InstructorRoute
+    }
+    '/instructor/analytics': {
+      id: '/instructor/analytics'
+      path: '/analytics'
+      fullPath: '/instructor/analytics'
+      preLoaderRoute: typeof InstructorAnalyticsRouteImport
       parentRoute: typeof InstructorRoute
     }
     '/courses/$courseId': {
@@ -528,11 +547,13 @@ const InstructorCoursesRouteWithChildren =
   InstructorCoursesRoute._addFileChildren(InstructorCoursesRouteChildren)
 
 interface InstructorRouteChildren {
+  InstructorAnalyticsRoute: typeof InstructorAnalyticsRoute
   InstructorCoursesRoute: typeof InstructorCoursesRouteWithChildren
   InstructorDashboardRoute: typeof InstructorDashboardRoute
 }
 
 const InstructorRouteChildren: InstructorRouteChildren = {
+  InstructorAnalyticsRoute: InstructorAnalyticsRoute,
   InstructorCoursesRoute: InstructorCoursesRouteWithChildren,
   InstructorDashboardRoute: InstructorDashboardRoute,
 }
