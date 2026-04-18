@@ -25,6 +25,7 @@ import { Route as AdminUsersRouteImport } from './routes/admin.users'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as InstructorCoursesIndexRouteImport } from './routes/instructor.courses.index'
+import { Route as StudentQuizQuizIdRouteImport } from './routes/student.quiz.$quizId'
 import { Route as InstructorCoursesNewRouteImport } from './routes/instructor.courses.new'
 import { Route as StudentLearnCourseIdLessonIdRouteImport } from './routes/student.learn.$courseId.$lessonId'
 import { Route as InstructorCoursesIdStudentsRouteImport } from './routes/instructor.courses.$id.students'
@@ -112,6 +113,11 @@ const InstructorCoursesIndexRoute = InstructorCoursesIndexRouteImport.update({
   path: '/',
   getParentRoute: () => InstructorCoursesRoute,
 } as any)
+const StudentQuizQuizIdRoute = StudentQuizQuizIdRouteImport.update({
+  id: '/quiz/$quizId',
+  path: '/quiz/$quizId',
+  getParentRoute: () => StudentRoute,
+} as any)
 const InstructorCoursesNewRoute = InstructorCoursesNewRouteImport.update({
   id: '/new',
   path: '/new',
@@ -164,6 +170,7 @@ export interface FileRoutesByFullPath {
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/profile': typeof StudentProfileRoute
   '/instructor/courses/new': typeof InstructorCoursesNewRoute
+  '/student/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/instructor/courses/': typeof InstructorCoursesIndexRoute
   '/instructor/courses/$id/edit': typeof InstructorCoursesIdEditRoute
   '/instructor/courses/$id/lessons': typeof InstructorCoursesIdLessonsRoute
@@ -187,6 +194,7 @@ export interface FileRoutesByTo {
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/profile': typeof StudentProfileRoute
   '/instructor/courses/new': typeof InstructorCoursesNewRoute
+  '/student/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/instructor/courses': typeof InstructorCoursesIndexRoute
   '/instructor/courses/$id/edit': typeof InstructorCoursesIdEditRoute
   '/instructor/courses/$id/lessons': typeof InstructorCoursesIdLessonsRoute
@@ -212,6 +220,7 @@ export interface FileRoutesById {
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/profile': typeof StudentProfileRoute
   '/instructor/courses/new': typeof InstructorCoursesNewRoute
+  '/student/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/instructor/courses/': typeof InstructorCoursesIndexRoute
   '/instructor/courses/$id/edit': typeof InstructorCoursesIdEditRoute
   '/instructor/courses/$id/lessons': typeof InstructorCoursesIdLessonsRoute
@@ -238,6 +247,7 @@ export interface FileRouteTypes {
     | '/student/dashboard'
     | '/student/profile'
     | '/instructor/courses/new'
+    | '/student/quiz/$quizId'
     | '/instructor/courses/'
     | '/instructor/courses/$id/edit'
     | '/instructor/courses/$id/lessons'
@@ -261,6 +271,7 @@ export interface FileRouteTypes {
     | '/student/dashboard'
     | '/student/profile'
     | '/instructor/courses/new'
+    | '/student/quiz/$quizId'
     | '/instructor/courses'
     | '/instructor/courses/$id/edit'
     | '/instructor/courses/$id/lessons'
@@ -285,6 +296,7 @@ export interface FileRouteTypes {
     | '/student/dashboard'
     | '/student/profile'
     | '/instructor/courses/new'
+    | '/student/quiz/$quizId'
     | '/instructor/courses/'
     | '/instructor/courses/$id/edit'
     | '/instructor/courses/$id/lessons'
@@ -417,6 +429,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorCoursesIndexRouteImport
       parentRoute: typeof InstructorCoursesRoute
     }
+    '/student/quiz/$quizId': {
+      id: '/student/quiz/$quizId'
+      path: '/quiz/$quizId'
+      fullPath: '/student/quiz/$quizId'
+      preLoaderRoute: typeof StudentQuizQuizIdRouteImport
+      parentRoute: typeof StudentRoute
+    }
     '/instructor/courses/new': {
       id: '/instructor/courses/new'
       path: '/new'
@@ -525,12 +544,14 @@ const InstructorRouteWithChildren = InstructorRoute._addFileChildren(
 interface StudentRouteChildren {
   StudentDashboardRoute: typeof StudentDashboardRoute
   StudentProfileRoute: typeof StudentProfileRoute
+  StudentQuizQuizIdRoute: typeof StudentQuizQuizIdRoute
   StudentLearnCourseIdLessonIdRoute: typeof StudentLearnCourseIdLessonIdRoute
 }
 
 const StudentRouteChildren: StudentRouteChildren = {
   StudentDashboardRoute: StudentDashboardRoute,
   StudentProfileRoute: StudentProfileRoute,
+  StudentQuizQuizIdRoute: StudentQuizQuizIdRoute,
   StudentLearnCourseIdLessonIdRoute: StudentLearnCourseIdLessonIdRoute,
 }
 
