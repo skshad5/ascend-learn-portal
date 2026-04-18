@@ -98,7 +98,22 @@ function CourseDetailPage() {
     },
   });
 
-  const enroll = useMutation({
+  const lessonIds = (lessons ?? []).map((l) => l.id);
+  const { data: progress } = useQuery({
+    queryKey: ["course-progress", courseId, user?.id, lessonIds.join(",")],
+    enabled: !!user && lessonIds.length > 0,
+    queryFn: async () => {
+      if (!user || lessonIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("lesson_progress")
+        .select("lesson_id, completed")
+        .eq("user_id", user.id)
+        .eq("completed", true)
+        .in("lesson_id", lessonIds);
+      if (error) throw error;
+      return data;
+    },
+  });
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
       const { error } = await supabase.from("enrollments").insert({
