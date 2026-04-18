@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, ClipboardList, PlayCircle, Trophy, XCircle } from "lucide-react";
+import { Award, BookOpen, ClipboardList, Download, PlayCircle, Trophy, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -9,7 +9,10 @@ import { EmptyState } from "@/components/EmptyState";
 import { DashboardSkeleton } from "@/components/skeletons";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useProfile } from "@/hooks/use-profile";
+import { generateCertificate } from "@/lib/certificate";
 import { studentEnrollmentsQueryOptions } from "@/lib/queries";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/student/dashboard")({
   component: StudentDashboard,
