@@ -1,19 +1,31 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useEffect, useState } from "react";
-import { Search } from "lucide-react";
+import { useEffect, useMemo, useState } from "react";
+import { ChevronLeft, ChevronRight, Search } from "lucide-react";
 import { PublicHeader } from "@/components/PublicHeader";
-import { CourseCard, type CourseCardData } from "@/components/CourseCard";
+import { CourseCard } from "@/components/CourseCard";
+import { CourseCardGridSkeleton } from "@/components/skeletons";
 import { EmptyState } from "@/components/EmptyState";
 import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { supabase } from "@/integrations/supabase/client";
+import {
+  COURSES_PAGE_SIZE,
+  categoriesQueryOptions,
+  coursesListQueryOptions,
+} from "@/lib/queries";
 
 export const Route = createFileRoute("/courses")({
   validateSearch: (search: Record<string, unknown>) => ({
     category: typeof search.category === "string" ? search.category : undefined,
     level: typeof search.level === "string" ? search.level : undefined,
     price: typeof search.price === "string" ? search.price : undefined,
+    q: typeof search.q === "string" ? search.q : undefined,
+    page: typeof search.page === "number" && search.page > 0 ? search.page : 1,
+    pageSize:
+      typeof search.pageSize === "number" && search.pageSize > 0
+        ? search.pageSize
+        : COURSES_PAGE_SIZE,
   }),
   head: () => ({
     meta: [
@@ -23,60 +35,62 @@ export const Route = createFileRoute("/courses")({
       { property: "og:description", content: "Search and discover courses across categories, levels and price tiers." },
     ],
   }),
+  loader: ({ context: { queryClient } }) => {
+    // Always preload categories for the filter dropdown
+    queryClient.prefetchQuery(categoriesQueryOptions());
+  },
   component: CoursesPage,
 });
 
 function CoursesPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
-  const [q, setQ] = useState("");
-  const [debouncedQ, setDebouncedQ] = useState("");
+  const [q, setQ] = useState(search.q ?? "");
+  const [debouncedQ, setDebouncedQ] = useState(search.q ?? "");
 
   useEffect(() => {
     const t = setTimeout(() => setDebouncedQ(q), 300);
     return () => clearTimeout(t);
   }, [q]);
 
-  const { data: categories } = useQuery({
-    queryKey: ["categories"],
-    staleTime: 5 * 60_000,
-    queryFn: async () => {
-      const { data, error } = await supabase.from("categories").select("id, name, slug").order("name");
-      if (error) throw error;
-      return data;
-    },
-  });
+  // When debounced q changes, push to URL & reset to page 1
+  useEffect(() => {
+    if ((debouncedQ || "") !== (search.q || "")) {
+      navigate({
+        search: { ...search, q: debouncedQ || undefined, page: 1 },
+        replace: true,
+      });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [debouncedQ]);
 
-  // Resolve category slug -> id once so we can filter at the DB level
-  const categoryId = search.category
-    ? categories?.find((c) => c.slug === search.category)?.id
-    : undefined;
+  const { data: categories } = useQuery(categoriesQueryOptions());
 
-  const { data: courses, isLoading } = useQuery({
-    queryKey: ["courses", search.level, search.price, search.category, debouncedQ, categoryId],
-    staleTime: 30_000,
-    queryFn: async () => {
-      let query = supabase
-        .from("courses")
-        .select("id, title, slug, description, thumbnail, level, is_free, price, category:categories(name, slug)")
-        .eq("status", "approved")
-        .limit(48);
+  const categoryId = useMemo(
+    () =>
+      search.category
+        ? categories?.find((c) => c.slug === search.category)?.id
+        : undefined,
+    [search.category, categories],
+  );
 
-      if (search.level) query = query.eq("level", search.level);
-      if (search.price === "free") query = query.eq("is_free", true);
-      if (search.price === "paid") query = query.eq("is_free", false);
-      if (categoryId) query = query.eq("category_id", categoryId);
-      if (debouncedQ) query = query.ilike("title", `%${debouncedQ}%`);
-
-      const { data, error } = await query.order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as unknown as (CourseCardData & { category?: { name: string; slug: string } | null })[];
-    },
-  });
+  const { data, isLoading, isFetching } = useQuery(
+    coursesListQueryOptions({
+      page: search.page,
+      pageSize: search.pageSize,
+      level: search.level,
+      price: search.price,
+      categoryId,
+      q: debouncedQ || undefined,
+    }),
+  );
 
   const updateSearch = (patch: Partial<typeof search>) => {
-    navigate({ search: { ...search, ...patch } });
+    navigate({ search: { ...search, ...patch, page: 1 } });
   };
+
+  const total = data?.total ?? 0;
+  const totalPages = Math.max(1, Math.ceil(total / search.pageSize));
 
   return (
     <div className="min-h-screen bg-background">
@@ -118,15 +132,41 @@ function CoursesPage() {
 
         <div className="mt-8">
           {isLoading ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="aspect-[4/3] animate-pulse rounded-xl bg-card/50" />
-              ))}
-            </div>
-          ) : courses && courses.length > 0 ? (
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {courses.map((c) => <CourseCard key={c.id} course={c} />)}
-            </div>
+            <CourseCardGridSkeleton count={search.pageSize} />
+          ) : data && data.items.length > 0 ? (
+            <>
+              <div className={`grid gap-6 sm:grid-cols-2 lg:grid-cols-3 ${isFetching ? "opacity-70 transition-opacity" : ""}`}>
+                {data.items.map((c) => <CourseCard key={c.id} course={c} />)}
+              </div>
+
+              <div className="mt-10 flex flex-col items-center justify-between gap-4 sm:flex-row">
+                <div className="text-sm text-muted-foreground">
+                  Showing {(search.page - 1) * search.pageSize + 1}–
+                  {Math.min(search.page * search.pageSize, total)} of {total}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={search.page <= 1}
+                    onClick={() => navigate({ search: { ...search, page: search.page - 1 } })}
+                  >
+                    <ChevronLeft className="mr-1 h-4 w-4" /> Previous
+                  </Button>
+                  <span className="text-sm text-muted-foreground">
+                    Page {search.page} of {totalPages}
+                  </span>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    disabled={search.page >= totalPages}
+                    onClick={() => navigate({ search: { ...search, page: search.page + 1 } })}
+                  >
+                    Next <ChevronRight className="ml-1 h-4 w-4" />
+                  </Button>
+                </div>
+              </div>
+            </>
           ) : (
             <EmptyState
               title="No courses found"

@@ -3,8 +3,9 @@ import { useQuery } from "@tanstack/react-query";
 import { ArrowRight, Award, BookOpen, GraduationCap, PlayCircle, Users, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { PublicHeader } from "@/components/PublicHeader";
-import { CourseCard, type CourseCardData } from "@/components/CourseCard";
-import { supabase } from "@/integrations/supabase/client";
+import { CourseCard } from "@/components/CourseCard";
+import { CourseCardGridSkeleton } from "@/components/skeletons";
+import { featuredCoursesQueryOptions, homeCategoriesQueryOptions } from "@/lib/queries";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -15,34 +16,17 @@ export const Route = createFileRoute("/")({
       { property: "og:description", content: "Modern dark-themed learning platform with courses, video lessons, quizzes and instructor tools." },
     ],
   }),
+  loader: ({ context: { queryClient } }) => {
+    // Fire in parallel; don't block render
+    queryClient.prefetchQuery(featuredCoursesQueryOptions());
+    queryClient.prefetchQuery(homeCategoriesQueryOptions());
+  },
   component: LandingPage,
 });
 
 function LandingPage() {
-  const { data: featured } = useQuery({
-    queryKey: ["featured-courses"],
-    staleTime: 2 * 60_000,
-    queryFn: async () => {
-      const { data, error } = await supabase
-        .from("courses")
-        .select("id, title, slug, description, thumbnail, level, is_free, price, category:categories(name)")
-        .eq("status", "approved")
-        .order("created_at", { ascending: false })
-        .limit(6);
-      if (error) throw error;
-      return data as unknown as CourseCardData[];
-    },
-  });
-
-  const { data: categories } = useQuery({
-    queryKey: ["home-categories"],
-    staleTime: 5 * 60_000,
-    queryFn: async () => {
-      const { data, error } = await supabase.from("categories").select("id, name, slug, icon").limit(6);
-      if (error) throw error;
-      return data;
-    },
-  });
+  const { data: featured, isLoading: featuredLoading } = useQuery(featuredCoursesQueryOptions());
+  const { data: categories } = useQuery(homeCategoriesQueryOptions());
 
   return (
     <div className="min-h-screen bg-background">
@@ -133,7 +117,9 @@ function LandingPage() {
             </Link>
           </Button>
         </div>
-        {featured && featured.length > 0 ? (
+        {featuredLoading ? (
+          <CourseCardGridSkeleton count={6} />
+        ) : featured && featured.length > 0 ? (
           <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             {featured.map((c) => (
               <CourseCard key={c.id} course={c} />
