@@ -23,8 +23,11 @@ import { Route as InstructorCoursesRouteImport } from './routes/instructor.cours
 import { Route as InstructorAnalyticsRouteImport } from './routes/instructor.analytics'
 import { Route as CoursesCourseIdRouteImport } from './routes/courses.$courseId'
 import { Route as AdminUsersRouteImport } from './routes/admin.users'
+import { Route as AdminHomepageRouteImport } from './routes/admin.homepage'
+import { Route as AdminDiscountsRouteImport } from './routes/admin.discounts'
 import { Route as AdminDashboardRouteImport } from './routes/admin.dashboard'
 import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
+import { Route as AdminCategoriesRouteImport } from './routes/admin.categories'
 import { Route as InstructorCoursesIndexRouteImport } from './routes/instructor.courses.index'
 import { Route as StudentQuizQuizIdRouteImport } from './routes/student.quiz.$quizId'
 import { Route as InstructorCoursesNewRouteImport } from './routes/instructor.courses.new'
@@ -34,6 +37,7 @@ import { Route as InstructorCoursesIdStudentsRouteImport } from './routes/instru
 import { Route as InstructorCoursesIdQuizzesRouteImport } from './routes/instructor.courses.$id.quizzes'
 import { Route as InstructorCoursesIdLessonsRouteImport } from './routes/instructor.courses.$id.lessons'
 import { Route as InstructorCoursesIdEditRouteImport } from './routes/instructor.courses.$id.edit'
+import { Route as AdminCoursesIdEditRouteImport } from './routes/admin.courses.$id.edit'
 
 const StudentRoute = StudentRouteImport.update({
   id: '/student',
@@ -105,6 +109,16 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/users',
   getParentRoute: () => AdminRoute,
 } as any)
+const AdminHomepageRoute = AdminHomepageRouteImport.update({
+  id: '/homepage',
+  path: '/homepage',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminDiscountsRoute = AdminDiscountsRouteImport.update({
+  id: '/discounts',
+  path: '/discounts',
+  getParentRoute: () => AdminRoute,
+} as any)
 const AdminDashboardRoute = AdminDashboardRouteImport.update({
   id: '/dashboard',
   path: '/dashboard',
@@ -113,6 +127,11 @@ const AdminDashboardRoute = AdminDashboardRouteImport.update({
 const AdminCoursesRoute = AdminCoursesRouteImport.update({
   id: '/courses',
   path: '/courses',
+  getParentRoute: () => AdminRoute,
+} as any)
+const AdminCategoriesRoute = AdminCategoriesRouteImport.update({
+  id: '/categories',
+  path: '/categories',
   getParentRoute: () => AdminRoute,
 } as any)
 const InstructorCoursesIndexRoute = InstructorCoursesIndexRouteImport.update({
@@ -165,6 +184,11 @@ const InstructorCoursesIdEditRoute = InstructorCoursesIdEditRouteImport.update({
   path: '/$id/edit',
   getParentRoute: () => InstructorCoursesRoute,
 } as any)
+const AdminCoursesIdEditRoute = AdminCoursesIdEditRouteImport.update({
+  id: '/$id/edit',
+  path: '/$id/edit',
+  getParentRoute: () => AdminCoursesRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -174,8 +198,11 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/student': typeof StudentRouteWithChildren
-  '/admin/courses': typeof AdminCoursesRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/discounts': typeof AdminDiscountsRoute
+  '/admin/homepage': typeof AdminHomepageRoute
   '/admin/users': typeof AdminUsersRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/instructor/analytics': typeof InstructorAnalyticsRouteWithChildren
@@ -187,6 +214,7 @@ export interface FileRoutesByFullPath {
   '/instructor/courses/new': typeof InstructorCoursesNewRoute
   '/student/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/instructor/courses/': typeof InstructorCoursesIndexRoute
+  '/admin/courses/$id/edit': typeof AdminCoursesIdEditRoute
   '/instructor/courses/$id/edit': typeof InstructorCoursesIdEditRoute
   '/instructor/courses/$id/lessons': typeof InstructorCoursesIdLessonsRoute
   '/instructor/courses/$id/quizzes': typeof InstructorCoursesIdQuizzesRoute
@@ -201,8 +229,11 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/student': typeof StudentRouteWithChildren
-  '/admin/courses': typeof AdminCoursesRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/discounts': typeof AdminDiscountsRoute
+  '/admin/homepage': typeof AdminHomepageRoute
   '/admin/users': typeof AdminUsersRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/instructor/analytics': typeof InstructorAnalyticsRouteWithChildren
@@ -213,6 +244,7 @@ export interface FileRoutesByTo {
   '/instructor/courses/new': typeof InstructorCoursesNewRoute
   '/student/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/instructor/courses': typeof InstructorCoursesIndexRoute
+  '/admin/courses/$id/edit': typeof AdminCoursesIdEditRoute
   '/instructor/courses/$id/edit': typeof InstructorCoursesIdEditRoute
   '/instructor/courses/$id/lessons': typeof InstructorCoursesIdLessonsRoute
   '/instructor/courses/$id/quizzes': typeof InstructorCoursesIdQuizzesRoute
@@ -228,8 +260,11 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/student': typeof StudentRouteWithChildren
-  '/admin/courses': typeof AdminCoursesRoute
+  '/admin/categories': typeof AdminCategoriesRoute
+  '/admin/courses': typeof AdminCoursesRouteWithChildren
   '/admin/dashboard': typeof AdminDashboardRoute
+  '/admin/discounts': typeof AdminDiscountsRoute
+  '/admin/homepage': typeof AdminHomepageRoute
   '/admin/users': typeof AdminUsersRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
   '/instructor/analytics': typeof InstructorAnalyticsRouteWithChildren
@@ -241,6 +276,7 @@ export interface FileRoutesById {
   '/instructor/courses/new': typeof InstructorCoursesNewRoute
   '/student/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/instructor/courses/': typeof InstructorCoursesIndexRoute
+  '/admin/courses/$id/edit': typeof AdminCoursesIdEditRoute
   '/instructor/courses/$id/edit': typeof InstructorCoursesIdEditRoute
   '/instructor/courses/$id/lessons': typeof InstructorCoursesIdLessonsRoute
   '/instructor/courses/$id/quizzes': typeof InstructorCoursesIdQuizzesRoute
@@ -257,8 +293,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/student'
+    | '/admin/categories'
     | '/admin/courses'
     | '/admin/dashboard'
+    | '/admin/discounts'
+    | '/admin/homepage'
     | '/admin/users'
     | '/courses/$courseId'
     | '/instructor/analytics'
@@ -270,6 +309,7 @@ export interface FileRouteTypes {
     | '/instructor/courses/new'
     | '/student/quiz/$quizId'
     | '/instructor/courses/'
+    | '/admin/courses/$id/edit'
     | '/instructor/courses/$id/edit'
     | '/instructor/courses/$id/lessons'
     | '/instructor/courses/$id/quizzes'
@@ -284,8 +324,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/student'
+    | '/admin/categories'
     | '/admin/courses'
     | '/admin/dashboard'
+    | '/admin/discounts'
+    | '/admin/homepage'
     | '/admin/users'
     | '/courses/$courseId'
     | '/instructor/analytics'
@@ -296,6 +339,7 @@ export interface FileRouteTypes {
     | '/instructor/courses/new'
     | '/student/quiz/$quizId'
     | '/instructor/courses'
+    | '/admin/courses/$id/edit'
     | '/instructor/courses/$id/edit'
     | '/instructor/courses/$id/lessons'
     | '/instructor/courses/$id/quizzes'
@@ -310,8 +354,11 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/student'
+    | '/admin/categories'
     | '/admin/courses'
     | '/admin/dashboard'
+    | '/admin/discounts'
+    | '/admin/homepage'
     | '/admin/users'
     | '/courses/$courseId'
     | '/instructor/analytics'
@@ -323,6 +370,7 @@ export interface FileRouteTypes {
     | '/instructor/courses/new'
     | '/student/quiz/$quizId'
     | '/instructor/courses/'
+    | '/admin/courses/$id/edit'
     | '/instructor/courses/$id/edit'
     | '/instructor/courses/$id/lessons'
     | '/instructor/courses/$id/quizzes'
@@ -440,6 +488,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof AdminRoute
     }
+    '/admin/homepage': {
+      id: '/admin/homepage'
+      path: '/homepage'
+      fullPath: '/admin/homepage'
+      preLoaderRoute: typeof AdminHomepageRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/discounts': {
+      id: '/admin/discounts'
+      path: '/discounts'
+      fullPath: '/admin/discounts'
+      preLoaderRoute: typeof AdminDiscountsRouteImport
+      parentRoute: typeof AdminRoute
+    }
     '/admin/dashboard': {
       id: '/admin/dashboard'
       path: '/dashboard'
@@ -452,6 +514,13 @@ declare module '@tanstack/react-router' {
       path: '/courses'
       fullPath: '/admin/courses'
       preLoaderRoute: typeof AdminCoursesRouteImport
+      parentRoute: typeof AdminRoute
+    }
+    '/admin/categories': {
+      id: '/admin/categories'
+      path: '/categories'
+      fullPath: '/admin/categories'
+      preLoaderRoute: typeof AdminCategoriesRouteImport
       parentRoute: typeof AdminRoute
     }
     '/instructor/courses/': {
@@ -517,18 +586,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorCoursesIdEditRouteImport
       parentRoute: typeof InstructorCoursesRoute
     }
+    '/admin/courses/$id/edit': {
+      id: '/admin/courses/$id/edit'
+      path: '/$id/edit'
+      fullPath: '/admin/courses/$id/edit'
+      preLoaderRoute: typeof AdminCoursesIdEditRouteImport
+      parentRoute: typeof AdminCoursesRoute
+    }
   }
 }
 
+interface AdminCoursesRouteChildren {
+  AdminCoursesIdEditRoute: typeof AdminCoursesIdEditRoute
+}
+
+const AdminCoursesRouteChildren: AdminCoursesRouteChildren = {
+  AdminCoursesIdEditRoute: AdminCoursesIdEditRoute,
+}
+
+const AdminCoursesRouteWithChildren = AdminCoursesRoute._addFileChildren(
+  AdminCoursesRouteChildren,
+)
+
 interface AdminRouteChildren {
-  AdminCoursesRoute: typeof AdminCoursesRoute
+  AdminCategoriesRoute: typeof AdminCategoriesRoute
+  AdminCoursesRoute: typeof AdminCoursesRouteWithChildren
   AdminDashboardRoute: typeof AdminDashboardRoute
+  AdminDiscountsRoute: typeof AdminDiscountsRoute
+  AdminHomepageRoute: typeof AdminHomepageRoute
   AdminUsersRoute: typeof AdminUsersRoute
 }
 
 const AdminRouteChildren: AdminRouteChildren = {
-  AdminCoursesRoute: AdminCoursesRoute,
+  AdminCategoriesRoute: AdminCategoriesRoute,
+  AdminCoursesRoute: AdminCoursesRouteWithChildren,
   AdminDashboardRoute: AdminDashboardRoute,
+  AdminDiscountsRoute: AdminDiscountsRoute,
+  AdminHomepageRoute: AdminHomepageRoute,
   AdminUsersRoute: AdminUsersRoute,
 }
 
