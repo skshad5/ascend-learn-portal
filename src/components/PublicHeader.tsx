@@ -1,10 +1,15 @@
 import { Link } from "@tanstack/react-router";
 import { GraduationCap, LogOut, LayoutDashboard } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/lib/auth";
+import { useProfile, getInitials } from "@/hooks/use-profile";
 
 export function PublicHeader() {
   const { user, primaryRole, signOut } = useAuth();
+  const { data: profile } = useProfile();
+  const displayName = profile?.full_name || user?.email || "";
+  const initials = getInitials(profile?.full_name || user?.email);
 
   const dashboardPath =
     primaryRole === "admin"
@@ -41,6 +46,21 @@ export function PublicHeader() {
                   Dashboard
                 </Link>
               </Button>
+              <Link
+                to="/student/profile"
+                className="flex items-center gap-2 rounded-full pl-1 pr-2 py-1 transition-colors hover:bg-muted"
+                title={displayName}
+              >
+                <Avatar className="h-7 w-7">
+                  {profile?.avatar_url ? (
+                    <AvatarImage src={profile.avatar_url} alt={displayName} />
+                  ) : null}
+                  <AvatarFallback className="text-[10px]">{initials}</AvatarFallback>
+                </Avatar>
+                <span className="hidden max-w-[140px] truncate text-sm font-medium sm:inline">
+                  {displayName}
+                </span>
+              </Link>
               <Button variant="outline" size="sm" onClick={signOut}>
                 <LogOut className="mr-2 h-4 w-4" />
                 Sign out
