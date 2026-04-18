@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CheckCircle2, ChevronLeft, Circle } from "lucide-react";
+import { CheckCircle2, ChevronLeft, Circle, ClipboardList } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VideoPlayer } from "@/components/VideoPlayer";
 import { supabase } from "@/integrations/supabase/client";
@@ -41,6 +41,19 @@ function LearnPage() {
         .select("lesson_id, completed")
         .eq("user_id", user.id)
         .in("lesson_id", lessonIds);
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const { data: quizzes } = useQuery({
+    queryKey: ["course-quizzes", courseId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("quizzes")
+        .select("id, title, passing_score")
+        .eq("course_id", courseId)
+        .order("created_at");
       if (error) throw error;
       return data;
     },
@@ -121,6 +134,22 @@ function LearnPage() {
               </Link>
             );
           })}
+          {quizzes && quizzes.length > 0 && (
+            <>
+              <div className="mt-3 px-2 py-2 font-display text-sm font-semibold">Quizzes</div>
+              {quizzes.map((q) => (
+                <Link
+                  key={q.id}
+                  to="/student/quiz/$quizId"
+                  params={{ quizId: q.id }}
+                  className="flex items-center gap-3 rounded-lg px-3 py-2 text-sm transition-colors hover:bg-muted/50"
+                >
+                  <ClipboardList className="h-4 w-4 text-primary-glow" />
+                  <span className="line-clamp-1">{q.title}</span>
+                </Link>
+              ))}
+            </>
+          )}
         </aside>
       </div>
     </div>
