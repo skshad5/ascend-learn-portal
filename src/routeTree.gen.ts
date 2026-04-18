@@ -28,6 +28,7 @@ import { Route as AdminCoursesRouteImport } from './routes/admin.courses'
 import { Route as InstructorCoursesIndexRouteImport } from './routes/instructor.courses.index'
 import { Route as StudentQuizQuizIdRouteImport } from './routes/student.quiz.$quizId'
 import { Route as InstructorCoursesNewRouteImport } from './routes/instructor.courses.new'
+import { Route as InstructorAnalyticsQuizIdRouteImport } from './routes/instructor.analytics.$quizId'
 import { Route as StudentLearnCourseIdLessonIdRouteImport } from './routes/student.learn.$courseId.$lessonId'
 import { Route as InstructorCoursesIdStudentsRouteImport } from './routes/instructor.courses.$id.students'
 import { Route as InstructorCoursesIdQuizzesRouteImport } from './routes/instructor.courses.$id.quizzes'
@@ -129,6 +130,12 @@ const InstructorCoursesNewRoute = InstructorCoursesNewRouteImport.update({
   path: '/new',
   getParentRoute: () => InstructorCoursesRoute,
 } as any)
+const InstructorAnalyticsQuizIdRoute =
+  InstructorAnalyticsQuizIdRouteImport.update({
+    id: '/$quizId',
+    path: '/$quizId',
+    getParentRoute: () => InstructorAnalyticsRoute,
+  } as any)
 const StudentLearnCourseIdLessonIdRoute =
   StudentLearnCourseIdLessonIdRouteImport.update({
     id: '/learn/$courseId/$lessonId',
@@ -171,11 +178,12 @@ export interface FileRoutesByFullPath {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/users': typeof AdminUsersRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
-  '/instructor/analytics': typeof InstructorAnalyticsRoute
+  '/instructor/analytics': typeof InstructorAnalyticsRouteWithChildren
   '/instructor/courses': typeof InstructorCoursesRouteWithChildren
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/profile': typeof StudentProfileRoute
+  '/instructor/analytics/$quizId': typeof InstructorAnalyticsQuizIdRoute
   '/instructor/courses/new': typeof InstructorCoursesNewRoute
   '/student/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/instructor/courses/': typeof InstructorCoursesIndexRoute
@@ -197,10 +205,11 @@ export interface FileRoutesByTo {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/users': typeof AdminUsersRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
-  '/instructor/analytics': typeof InstructorAnalyticsRoute
+  '/instructor/analytics': typeof InstructorAnalyticsRouteWithChildren
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/profile': typeof StudentProfileRoute
+  '/instructor/analytics/$quizId': typeof InstructorAnalyticsQuizIdRoute
   '/instructor/courses/new': typeof InstructorCoursesNewRoute
   '/student/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/instructor/courses': typeof InstructorCoursesIndexRoute
@@ -223,11 +232,12 @@ export interface FileRoutesById {
   '/admin/dashboard': typeof AdminDashboardRoute
   '/admin/users': typeof AdminUsersRoute
   '/courses/$courseId': typeof CoursesCourseIdRoute
-  '/instructor/analytics': typeof InstructorAnalyticsRoute
+  '/instructor/analytics': typeof InstructorAnalyticsRouteWithChildren
   '/instructor/courses': typeof InstructorCoursesRouteWithChildren
   '/instructor/dashboard': typeof InstructorDashboardRoute
   '/student/dashboard': typeof StudentDashboardRoute
   '/student/profile': typeof StudentProfileRoute
+  '/instructor/analytics/$quizId': typeof InstructorAnalyticsQuizIdRoute
   '/instructor/courses/new': typeof InstructorCoursesNewRoute
   '/student/quiz/$quizId': typeof StudentQuizQuizIdRoute
   '/instructor/courses/': typeof InstructorCoursesIndexRoute
@@ -256,6 +266,7 @@ export interface FileRouteTypes {
     | '/instructor/dashboard'
     | '/student/dashboard'
     | '/student/profile'
+    | '/instructor/analytics/$quizId'
     | '/instructor/courses/new'
     | '/student/quiz/$quizId'
     | '/instructor/courses/'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/instructor/dashboard'
     | '/student/dashboard'
     | '/student/profile'
+    | '/instructor/analytics/$quizId'
     | '/instructor/courses/new'
     | '/student/quiz/$quizId'
     | '/instructor/courses'
@@ -307,6 +319,7 @@ export interface FileRouteTypes {
     | '/instructor/dashboard'
     | '/student/dashboard'
     | '/student/profile'
+    | '/instructor/analytics/$quizId'
     | '/instructor/courses/new'
     | '/student/quiz/$quizId'
     | '/instructor/courses/'
@@ -462,6 +475,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorCoursesNewRouteImport
       parentRoute: typeof InstructorCoursesRoute
     }
+    '/instructor/analytics/$quizId': {
+      id: '/instructor/analytics/$quizId'
+      path: '/$quizId'
+      fullPath: '/instructor/analytics/$quizId'
+      preLoaderRoute: typeof InstructorAnalyticsQuizIdRouteImport
+      parentRoute: typeof InstructorAnalyticsRoute
+    }
     '/student/learn/$courseId/$lessonId': {
       id: '/student/learn/$courseId/$lessonId'
       path: '/learn/$courseId/$lessonId'
@@ -525,6 +545,17 @@ const CoursesRouteChildren: CoursesRouteChildren = {
 const CoursesRouteWithChildren =
   CoursesRoute._addFileChildren(CoursesRouteChildren)
 
+interface InstructorAnalyticsRouteChildren {
+  InstructorAnalyticsQuizIdRoute: typeof InstructorAnalyticsQuizIdRoute
+}
+
+const InstructorAnalyticsRouteChildren: InstructorAnalyticsRouteChildren = {
+  InstructorAnalyticsQuizIdRoute: InstructorAnalyticsQuizIdRoute,
+}
+
+const InstructorAnalyticsRouteWithChildren =
+  InstructorAnalyticsRoute._addFileChildren(InstructorAnalyticsRouteChildren)
+
 interface InstructorCoursesRouteChildren {
   InstructorCoursesNewRoute: typeof InstructorCoursesNewRoute
   InstructorCoursesIndexRoute: typeof InstructorCoursesIndexRoute
@@ -547,13 +578,13 @@ const InstructorCoursesRouteWithChildren =
   InstructorCoursesRoute._addFileChildren(InstructorCoursesRouteChildren)
 
 interface InstructorRouteChildren {
-  InstructorAnalyticsRoute: typeof InstructorAnalyticsRoute
+  InstructorAnalyticsRoute: typeof InstructorAnalyticsRouteWithChildren
   InstructorCoursesRoute: typeof InstructorCoursesRouteWithChildren
   InstructorDashboardRoute: typeof InstructorDashboardRoute
 }
 
 const InstructorRouteChildren: InstructorRouteChildren = {
-  InstructorAnalyticsRoute: InstructorAnalyticsRoute,
+  InstructorAnalyticsRoute: InstructorAnalyticsRouteWithChildren,
   InstructorCoursesRoute: InstructorCoursesRouteWithChildren,
   InstructorDashboardRoute: InstructorDashboardRoute,
 }
@@ -591,3 +622,12 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { createStart } from '@tanstack/react-start'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+  }
+}
