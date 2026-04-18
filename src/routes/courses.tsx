@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Search } from "lucide-react";
 import { PublicHeader } from "@/components/PublicHeader";
 import { CourseCard, type CourseCardData } from "@/components/CourseCard";
@@ -30,9 +30,16 @@ function CoursesPage() {
   const search = Route.useSearch();
   const navigate = Route.useNavigate();
   const [q, setQ] = useState("");
+  const [debouncedQ, setDebouncedQ] = useState("");
+
+  useEffect(() => {
+    const t = setTimeout(() => setDebouncedQ(q), 300);
+    return () => clearTimeout(t);
+  }, [q]);
 
   const { data: categories } = useQuery({
     queryKey: ["categories"],
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("categories").select("id, name, slug").order("name");
       if (error) throw error;
@@ -40,24 +47,30 @@ function CoursesPage() {
     },
   });
 
+  // Resolve category slug -> id once so we can filter at the DB level
+  const categoryId = search.category
+    ? categories?.find((c) => c.slug === search.category)?.id
+    : undefined;
+
   const { data: courses, isLoading } = useQuery({
-    queryKey: ["courses", search, q],
+    queryKey: ["courses", search.level, search.price, search.category, debouncedQ, categoryId],
+    staleTime: 30_000,
     queryFn: async () => {
       let query = supabase
         .from("courses")
         .select("id, title, slug, description, thumbnail, level, is_free, price, category:categories(name, slug)")
-        .eq("status", "approved");
+        .eq("status", "approved")
+        .limit(48);
 
       if (search.level) query = query.eq("level", search.level);
       if (search.price === "free") query = query.eq("is_free", true);
       if (search.price === "paid") query = query.eq("is_free", false);
-      if (q) query = query.ilike("title", `%${q}%`);
+      if (categoryId) query = query.eq("category_id", categoryId);
+      if (debouncedQ) query = query.ilike("title", `%${debouncedQ}%`);
 
       const { data, error } = await query.order("created_at", { ascending: false });
       if (error) throw error;
-      let result = data as unknown as (CourseCardData & { category?: { name: string; slug: string } | null })[];
-      if (search.category) result = result.filter((c) => c.category?.slug === search.category);
-      return result;
+      return data as unknown as (CourseCardData & { category?: { name: string; slug: string } | null })[];
     },
   });
 
