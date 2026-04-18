@@ -20,8 +20,102 @@ export const Route = createFileRoute("/student/dashboard")({
 
 function StudentDashboard() {
   const { user } = useAuth();
+  const { data: profile } = useProfile();
 
   const { data: enrolled, isLoading } = useQuery(studentEnrollmentsQueryOptions(user?.id));
+
+  const enrolledCourseIds = (enrolled ?? []).map((e) => e.course_id);
+  const { data: certificates, isLoading: certsLoading } = useQuery({
+    queryKey: ["my-certificates", user?.id, enrolledCourseIds.join(",")],
+    enabled: !!user && enrolledCourseIds.length > 0,
+    queryFn: async () => {
+      if (!user || enrolledCourseIds.length === 0) return [];
+
+      const { data: quizzes } = await supabase
+        .from("quizzes")
+        .select("id, course_id, passing_score")
+        .in("course_id", enrolledCourseIds);
+
+      const quizIds = (quizzes ?? []).map((q) => q.id);
+      const { data: attempts } = quizIds.length
+        ? await supabase
+            .from("quiz_attempts")
+            .select("quiz_id, score")
+            .eq("user_id", user.id)
+            .in("quiz_id", quizIds)
+        : { data: [] };
+
+      const bestByQuiz = new Map<string, number>();
+      for (const a of attempts ?? []) {
+        const prev = bestByQuiz.get(a.quiz_id);
+        if (prev === undefined || a.score > prev) bestByQuiz.set(a.quiz_id, a.score);
+      }
+
+      const completed: {
+        courseId: string;
+        title: string;
+        thumbnail: string | null;
+        instructorName: string;
+        completedAt: Date;
+      }[] = [];
+
+      for (const e of enrolled ?? []) {
+        if (e.total === 0 || e.completed < e.total) continue;
+        const courseQuizzes = (quizzes ?? []).filter((q) => q.course_id === e.course_id);
+        const allPassed = courseQuizzes.every((q) => {
+          const best = bestByQuiz.get(q.id);
+          return best !== undefined && best >= q.passing_score;
+        });
+        if (!allPassed) continue;
+
+        const course = e.course as {
+          id: string;
+          title: string;
+          thumbnail: string | null;
+        } | null;
+        if (!course) continue;
+
+        const { data: courseRow } = await supabase
+          .from("courses")
+          .select("instructor_id")
+          .eq("id", e.course_id)
+          .maybeSingle();
+        let instructorName = "Instructor";
+        if (courseRow?.instructor_id) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", courseRow.instructor_id)
+            .maybeSingle();
+          instructorName = prof?.full_name || "Instructor";
+        }
+
+        completed.push({
+          courseId: e.course_id,
+          title: course.title,
+          thumbnail: course.thumbnail,
+          instructorName,
+          completedAt: new Date(e.enrolled_at),
+        });
+      }
+
+      return completed;
+    },
+  });
+
+  const handleDownload = (c: {
+    title: string;
+    instructorName: string;
+    completedAt: Date;
+  }) => {
+    generateCertificate({
+      studentName: profile?.full_name || user?.email || "Student",
+      courseTitle: c.title,
+      instructorName: c.instructorName,
+      completionDate: c.completedAt,
+    });
+    toast.success("Certificate downloaded!");
+  };
 
   const { data: quizAttempts, isLoading: attemptsLoading } = useQuery({
     queryKey: ["my-quiz-attempts", user?.id],
