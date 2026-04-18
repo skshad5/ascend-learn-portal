@@ -318,6 +318,31 @@ function CourseDetailPage() {
                     {enroll.isPending ? "Enrolling..." : course.is_free ? "Enroll for free" : "Buy course"}
                   </Button>
                 )}
+                {enrollment && (
+                  <div className="mt-4 rounded-lg border border-border/50 bg-muted/30 p-3">
+                    <div className="mb-2 flex items-center justify-between text-xs text-muted-foreground">
+                      <span>Course progress</span>
+                      <span>
+                        {completedLessons}/{totalLessons} lessons
+                        {(quizzes?.length ?? 0) > 0 && ` • ${allQuizzesPassed ? "all" : "not all"} quizzes passed`}
+                      </span>
+                    </div>
+                    {courseComplete ? (
+                      <Button
+                        onClick={handleDownloadCertificate}
+                        variant="outline"
+                        className="w-full border-success/40 bg-success/10 text-success hover:bg-success/15 hover:text-success"
+                      >
+                        <Award className="mr-2 h-4 w-4" />
+                        Download certificate
+                      </Button>
+                    ) : (
+                      <p className="text-xs text-muted-foreground">
+                        Complete every lesson{(quizzes?.length ?? 0) > 0 ? " and pass every quiz" : ""} to unlock your certificate.
+                      </p>
+                    )}
+                  </div>
+                )}
                 <ul className="mt-6 space-y-2 text-sm text-muted-foreground">
                   <li className="flex items-center gap-2"><Clock className="h-4 w-4" />Lifetime access</li>
                   <li className="flex items-center gap-2"><BookOpen className="h-4 w-4" />{lessons?.length ?? 0} lessons</li>
