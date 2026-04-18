@@ -32,11 +32,46 @@ export const homeCategoriesQueryOptions = () =>
     },
   });
 
+export const homepageContentQueryOptions = () =>
+  queryOptions({
+    queryKey: ["homepage-content"],
+    staleTime: 60_000,
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("homepage_content")
+        .select("*")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      return data;
+    },
+  });
+
 export const featuredCoursesQueryOptions = () =>
   queryOptions({
     queryKey: ["featured-courses"],
     staleTime: 2 * 60_000,
     queryFn: async () => {
+      const { data: hp } = await supabase
+        .from("homepage_content")
+        .select("featured_course_ids")
+        .order("updated_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      const picked = (hp?.featured_course_ids ?? []).slice(0, 6);
+      if (picked.length > 0) {
+        const { data } = await supabase
+          .from("courses")
+          .select(
+            "id, title, slug, description, thumbnail, level, is_free, price, category:categories(name)",
+          )
+          .in("id", picked)
+          .eq("status", "approved");
+        const ordered = picked
+          .map((id) => (data ?? []).find((c) => c.id === id))
+          .filter(Boolean);
+        if (ordered.length > 0) return ordered as unknown as CourseCardData[];
+      }
       const { data, error } = await supabase
         .from("courses")
         .select(

@@ -94,6 +94,50 @@ export type Database = {
           },
         ]
       }
+      discounts: {
+        Row: {
+          active: boolean
+          course_id: string
+          created_at: string
+          discount_type: string
+          end_date: string | null
+          id: string
+          start_date: string | null
+          updated_at: string
+          value: number
+        }
+        Insert: {
+          active?: boolean
+          course_id: string
+          created_at?: string
+          discount_type?: string
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          updated_at?: string
+          value: number
+        }
+        Update: {
+          active?: boolean
+          course_id?: string
+          created_at?: string
+          discount_type?: string
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          updated_at?: string
+          value?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "discounts_course_id_fkey"
+            columns: ["course_id"]
+            isOneToOne: false
+            referencedRelation: "courses"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       enrollments: {
         Row: {
           course_id: string
@@ -125,6 +169,39 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      homepage_content: {
+        Row: {
+          banner_image: string | null
+          featured_course_ids: string[]
+          hero_cta_link: string
+          hero_cta_text: string
+          hero_subtitle: string
+          hero_title: string
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          banner_image?: string | null
+          featured_course_ids?: string[]
+          hero_cta_link?: string
+          hero_cta_text?: string
+          hero_subtitle?: string
+          hero_title?: string
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          banner_image?: string | null
+          featured_course_ids?: string[]
+          hero_cta_link?: string
+          hero_cta_text?: string
+          hero_subtitle?: string
+          hero_title?: string
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       lesson_progress: {
         Row: {

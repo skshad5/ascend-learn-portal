@@ -3,12 +3,15 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar, type DashboardNavItem } from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { LayoutDashboard, Users, BookOpen, LogOut } from "lucide-react";
+import { LayoutDashboard, Users, BookOpen, LogOut, FolderTree, Tag, Home } from "lucide-react";
 
 const items: DashboardNavItem[] = [
   { title: "Dashboard", path: "/admin/dashboard", icon: LayoutDashboard },
   { title: "Users", path: "/admin/users", icon: Users },
   { title: "Courses", path: "/admin/courses", icon: BookOpen },
+  { title: "Categories", path: "/admin/categories", icon: FolderTree },
+  { title: "Discounts", path: "/admin/discounts", icon: Tag },
+  { title: "Homepage", path: "/admin/homepage", icon: Home },
 ];
 
 export const Route = createFileRoute("/admin")({

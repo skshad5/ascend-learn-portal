@@ -1,6 +1,6 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { Award, BookOpen, CheckCircle2, ClipboardList, Clock, PlayCircle, Trophy, User, XCircle } from "lucide-react";
+import { Award, BookOpen, CheckCircle2, ClipboardList, Clock, PlayCircle, Tag, Trophy, User, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { PublicHeader } from "@/components/PublicHeader";
@@ -8,6 +8,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { useProfile } from "@/hooks/use-profile";
 import { generateCertificate } from "@/lib/certificate";
+import { applyDiscount, getActiveDiscount, type DiscountRow } from "@/lib/discount";
 import { toast } from "sonner";
 
 export const Route = createFileRoute("/courses/$courseId")({
@@ -95,6 +96,18 @@ function CourseDetailPage() {
         .order("submitted_at", { ascending: false });
       if (error) throw error;
       return data;
+    },
+  });
+
+  const { data: discounts } = useQuery({
+    queryKey: ["course-discounts", courseId],
+    queryFn: async () => {
+      const { data } = await supabase
+        .from("discounts")
+        .select("id, course_id, discount_type, value, start_date, end_date, active")
+        .eq("course_id", courseId)
+        .eq("active", true);
+      return (data ?? []) as DiscountRow[];
     },
   });
 
@@ -304,9 +317,28 @@ function CourseDetailPage() {
                 {course.thumbnail && <img src={course.thumbnail} alt={course.title} className="h-full w-full object-cover" />}
               </div>
               <div className="p-6">
-                <div className="font-display text-3xl font-bold">
-                  {course.is_free ? "Free" : `$${course.price}`}
-                </div>
+                {(() => {
+                  if (course.is_free) {
+                    return <div className="font-display text-3xl font-bold">Free</div>;
+                  }
+                  const active = getActiveDiscount(discounts);
+                  if (!active) {
+                    return <div className="font-display text-3xl font-bold">${course.price}</div>;
+                  }
+                  const discounted = applyDiscount(Number(course.price), active);
+                  return (
+                    <div>
+                      <div className="flex items-baseline gap-2">
+                        <div className="font-display text-3xl font-bold">${discounted.toFixed(2).replace(/\.00$/, "")}</div>
+                        <div className="text-lg text-muted-foreground line-through">${course.price}</div>
+                      </div>
+                      <Badge className="mt-2 bg-success text-success-foreground">
+                        <Tag className="mr-1 h-3 w-3" />
+                        {active.discount_type === "percent" ? `${active.value}% off` : `$${active.value} off`}
+                      </Badge>
+                    </div>
+                  );
+                })()}
                 {enrollment ? (
                   <Button asChild className="mt-4 w-full bg-gradient-primary shadow-glow">
                     <Link to="/student/learn/$courseId/$lessonId" params={{ courseId, lessonId: lessons?.[0]?.id ?? "" }}>

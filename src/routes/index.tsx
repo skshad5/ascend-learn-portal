@@ -5,7 +5,11 @@ import { Button } from "@/components/ui/button";
 import { PublicHeader } from "@/components/PublicHeader";
 import { CourseCard } from "@/components/CourseCard";
 import { CourseCardGridSkeleton } from "@/components/skeletons";
-import { featuredCoursesQueryOptions, homeCategoriesQueryOptions } from "@/lib/queries";
+import {
+  featuredCoursesQueryOptions,
+  homeCategoriesQueryOptions,
+  homepageContentQueryOptions,
+} from "@/lib/queries";
 
 export const Route = createFileRoute("/")({
   head: () => ({
@@ -17,9 +21,9 @@ export const Route = createFileRoute("/")({
     ],
   }),
   loader: ({ context: { queryClient } }) => {
-    // Fire in parallel; don't block render
     queryClient.prefetchQuery(featuredCoursesQueryOptions());
     queryClient.prefetchQuery(homeCategoriesQueryOptions());
+    queryClient.prefetchQuery(homepageContentQueryOptions());
   },
   component: LandingPage,
 });
@@ -27,12 +31,28 @@ export const Route = createFileRoute("/")({
 function LandingPage() {
   const { data: featured, isLoading: featuredLoading } = useQuery(featuredCoursesQueryOptions());
   const { data: categories } = useQuery(homeCategoriesQueryOptions());
+  const { data: hp } = useQuery(homepageContentQueryOptions());
+
+  const heroTitle = hp?.hero_title ?? "Learn anything. Teach anyone.";
+  const heroSubtitle =
+    hp?.hero_subtitle ??
+    "A complete learning platform with rich video lessons, quizzes, progress tracking, and powerful instructor tools.";
+  const ctaText = hp?.hero_cta_text ?? "Browse courses";
+  const ctaLink = hp?.hero_cta_link ?? "/courses";
+  const banner = hp?.banner_image;
 
   return (
     <div className="min-h-screen bg-background">
       <PublicHeader />
 
-      {/* Hero */}
+      {banner && (
+        <div className="mx-auto max-w-7xl px-4 pt-6 sm:px-6">
+          <div className="overflow-hidden rounded-2xl">
+            <img src={banner} alt="" className="h-48 w-full object-cover sm:h-64" />
+          </div>
+        </div>
+      )}
+
       <section className="relative overflow-hidden bg-gradient-hero">
         <div className="mx-auto max-w-7xl px-4 py-20 sm:px-6 sm:py-28 lg:py-32">
           <div className="mx-auto max-w-3xl text-center">
@@ -41,17 +61,16 @@ function LandingPage() {
               Built for modern learning
             </div>
             <h1 className="font-display text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-              Learn anything.{" "}
-              <span className="text-gradient-primary">Teach anyone.</span>
+              {heroTitle}
             </h1>
             <p className="mx-auto mt-6 max-w-2xl text-lg text-muted-foreground">
-              A complete learning platform with rich video lessons, quizzes, progress tracking, and powerful instructor tools — wrapped in a beautiful dark-first interface.
+              {heroSubtitle}
             </p>
             <div className="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
               <Button asChild size="lg" className="bg-gradient-primary shadow-glow">
-                <Link to="/courses">
-                  Browse courses <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
+                <a href={ctaLink}>
+                  {ctaText} <ArrowRight className="ml-2 h-4 w-4" />
+                </a>
               </Button>
               <Button asChild size="lg" variant="outline">
                 <Link to="/signup">Become an instructor</Link>
