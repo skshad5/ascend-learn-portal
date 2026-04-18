@@ -5,8 +5,9 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
 import { EmptyState } from "@/components/EmptyState";
-import { supabase } from "@/integrations/supabase/client";
+import { DashboardSkeleton } from "@/components/skeletons";
 import { useAuth } from "@/lib/auth";
+import { studentEnrollmentsQueryOptions } from "@/lib/queries";
 
 export const Route = createFileRoute("/student/dashboard")({
   component: StudentDashboard,
@@ -15,46 +16,7 @@ export const Route = createFileRoute("/student/dashboard")({
 function StudentDashboard() {
   const { user } = useAuth();
 
-  const { data: enrolled, isLoading } = useQuery({
-    queryKey: ["my-enrollments", user?.id],
-    enabled: !!user,
-    staleTime: 60_000,
-    queryFn: async () => {
-      if (!user) return [];
-      const { data: enr, error } = await supabase
-        .from("enrollments")
-        .select("course_id, enrolled_at, course:courses(id, title, thumbnail, description, lessons(id))")
-        .eq("user_id", user.id);
-      if (error) throw error;
-
-      const allLessonIds = (enr ?? []).flatMap(
-        (e) => ((e.course as { lessons?: { id: string }[] } | null)?.lessons ?? []).map((l) => l.id),
-      );
-
-      // Single query for all completed lessons across all enrolled courses
-      let completedSet = new Set<string>();
-      if (allLessonIds.length > 0) {
-        const { data: progress } = await supabase
-          .from("lesson_progress")
-          .select("lesson_id")
-          .eq("user_id", user.id)
-          .eq("completed", true)
-          .in("lesson_id", allLessonIds);
-        completedSet = new Set((progress ?? []).map((p) => p.lesson_id));
-      }
-
-      return (enr ?? []).map((e) => {
-        const lessons = (e.course as { lessons?: { id: string }[] } | null)?.lessons ?? [];
-        const completed = lessons.filter((l) => completedSet.has(l.id)).length;
-        return {
-          ...e,
-          total: lessons.length,
-          completed,
-          firstLessonId: lessons[0]?.id ?? null,
-        };
-      });
-    },
-  });
+  const { data: enrolled, isLoading } = useQuery(studentEnrollmentsQueryOptions(user?.id));
 
   return (
     <div className="space-y-6">
@@ -64,9 +26,7 @@ function StudentDashboard() {
       </div>
 
       {isLoading ? (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {[1, 2, 3].map((i) => <div key={i} className="h-48 animate-pulse rounded-xl bg-card" />)}
-        </div>
+        <DashboardSkeleton count={3} />
       ) : enrolled && enrolled.length > 0 ? (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {enrolled.map((e) => {
