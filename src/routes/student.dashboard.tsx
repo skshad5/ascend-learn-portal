@@ -18,39 +18,41 @@ function StudentDashboard() {
   const { data: enrolled, isLoading } = useQuery({
     queryKey: ["my-enrollments", user?.id],
     enabled: !!user,
+    staleTime: 60_000,
     queryFn: async () => {
       if (!user) return [];
       const { data: enr, error } = await supabase
         .from("enrollments")
-        .select("course_id, enrolled_at, course:courses(id, title, thumbnail, description)")
+        .select("course_id, enrolled_at, course:courses(id, title, thumbnail, description, lessons(id))")
         .eq("user_id", user.id);
       if (error) throw error;
 
-      // Fetch progress for each course
-      const results = await Promise.all(
-        (enr ?? []).map(async (e) => {
-          const courseId = e.course_id;
-          const { data: lessons } = await supabase.from("lessons").select("id").eq("course_id", courseId);
-          const lessonIds = (lessons ?? []).map((l) => l.id);
-          let completed = 0;
-          if (lessonIds.length > 0) {
-            const { count } = await supabase
-              .from("lesson_progress")
-              .select("*", { count: "exact", head: true })
-              .eq("user_id", user.id)
-              .eq("completed", true)
-              .in("lesson_id", lessonIds);
-            completed = count ?? 0;
-          }
-          return {
-            ...e,
-            total: lessonIds.length,
-            completed,
-            firstLessonId: lessonIds[0] ?? null,
-          };
-        }),
+      const allLessonIds = (enr ?? []).flatMap(
+        (e) => ((e.course as { lessons?: { id: string }[] } | null)?.lessons ?? []).map((l) => l.id),
       );
-      return results;
+
+      // Single query for all completed lessons across all enrolled courses
+      let completedSet = new Set<string>();
+      if (allLessonIds.length > 0) {
+        const { data: progress } = await supabase
+          .from("lesson_progress")
+          .select("lesson_id")
+          .eq("user_id", user.id)
+          .eq("completed", true)
+          .in("lesson_id", allLessonIds);
+        completedSet = new Set((progress ?? []).map((p) => p.lesson_id));
+      }
+
+      return (enr ?? []).map((e) => {
+        const lessons = (e.course as { lessons?: { id: string }[] } | null)?.lessons ?? [];
+        const completed = lessons.filter((l) => completedSet.has(l.id)).length;
+        return {
+          ...e,
+          total: lessons.length,
+          completed,
+          firstLessonId: lessons[0]?.id ?? null,
+        };
+      });
     },
   });
 

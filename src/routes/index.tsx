@@ -21,6 +21,7 @@ export const Route = createFileRoute("/")({
 function LandingPage() {
   const { data: featured } = useQuery({
     queryKey: ["featured-courses"],
+    staleTime: 2 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase
         .from("courses")
@@ -35,6 +36,7 @@ function LandingPage() {
 
   const { data: categories } = useQuery({
     queryKey: ["home-categories"],
+    staleTime: 5 * 60_000,
     queryFn: async () => {
       const { data, error } = await supabase.from("categories").select("id, name, slug, icon").limit(6);
       if (error) throw error;
