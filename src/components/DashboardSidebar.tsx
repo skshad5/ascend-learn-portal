@@ -42,7 +42,6 @@ export function DashboardSidebar({ items, label }: { items: DashboardNavItem[]; 
                 return (
                   <SidebarMenuItem key={item.path}>
                     <SidebarMenuButton asChild isActive={active}>
-                      {/* @ts-expect-error dynamic typed path */}
                       <Link to={item.path}>
                         <item.icon />
                         <span>{item.title}</span>

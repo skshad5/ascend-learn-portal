@@ -36,7 +36,6 @@ export function PublicHeader() {
           {user ? (
             <>
               <Button asChild variant="ghost" size="sm">
-                {/* @ts-expect-error dynamic dashboard path */}
                 <Link to={dashboardPath}>
                   <LayoutDashboard className="mr-2 h-4 w-4" />
                   Dashboard
