@@ -170,6 +170,30 @@ function CourseDetailPage() {
     enroll.mutate();
   };
 
+  const completedLessons = (progress ?? []).length;
+  const totalLessons = lessons?.length ?? 0;
+  const allLessonsDone = totalLessons > 0 && completedLessons >= totalLessons;
+  const allQuizzesPassed =
+    (quizzes?.length ?? 0) === 0 ||
+    (quizzes ?? []).every((q) => {
+      const my = (attempts ?? []).filter((a) => a.quiz_id === q.id);
+      if (my.length === 0) return false;
+      const best = my.reduce((m, a) => (a.score > m.score ? a : m));
+      return best.score >= q.passing_score;
+    });
+  const courseComplete = !!enrollment && allLessonsDone && allQuizzesPassed;
+
+  const handleDownloadCertificate = () => {
+    if (!course) return;
+    generateCertificate({
+      studentName: profile?.full_name || user?.email || "Student",
+      courseTitle: course.title,
+      instructorName: course.instructor?.full_name || "Instructor",
+      completionDate: new Date(),
+    });
+    toast.success("Certificate downloaded!");
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <PublicHeader />
