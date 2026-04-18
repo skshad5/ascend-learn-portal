@@ -19,6 +19,7 @@ function CourseDetailPage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { data: profile } = useProfile();
 
   const { data: course, isLoading } = useQuery({
     queryKey: ["course", courseId],
