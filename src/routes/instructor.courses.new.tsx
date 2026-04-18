@@ -26,7 +26,7 @@ function NewCoursePage() {
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
   const [thumbnail, setThumbnail] = useState("");
-  const [categoryId, setCategoryId] = useState<string>("");
+  const [categoryId, setCategoryId] = useState<string | undefined>(undefined);
   const [level, setLevel] = useState("beginner");
   const [isFree, setIsFree] = useState(true);
   const [price, setPrice] = useState("0");
