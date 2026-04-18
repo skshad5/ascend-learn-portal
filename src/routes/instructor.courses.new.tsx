@@ -41,23 +41,28 @@ function NewCoursePage() {
 
   const create = useMutation({
     mutationFn: async () => {
-      if (!user) throw new Error("Not authenticated");
+      if (!user) throw new Error("You must be signed in to create a course.");
+      if (!title.trim()) throw new Error("Title is required.");
+      const payload = {
+        title: title.trim(),
+        slug: slugify(title),
+        description: description.trim() || null,
+        thumbnail: thumbnail.trim() || null,
+        category_id: categoryId ? categoryId : null,
+        level,
+        is_free: isFree,
+        price: isFree ? 0 : Number(price) || 0,
+        instructor_id: user.id,
+      };
       const { data, error } = await supabase
         .from("courses")
-        .insert({
-          title,
-          slug: slugify(title),
-          description,
-          thumbnail: thumbnail || null,
-          category_id: categoryId || null,
-          level,
-          is_free: isFree,
-          price: isFree ? 0 : Number(price) || 0,
-          instructor_id: user.id,
-        })
+        .insert(payload)
         .select()
         .single();
-      if (error) throw error;
+      if (error) {
+        console.error("Course insert failed:", error, "payload:", payload);
+        throw new Error(error.message || "Failed to create course");
+      }
       return data;
     },
     onSuccess: (data) => {
@@ -69,6 +74,8 @@ function NewCoursePage() {
 
   const handleSubmit = (e: FormEvent) => {
     e.preventDefault();
+    e.stopPropagation();
+    if (create.isPending) return;
     create.mutate();
   };
 
