@@ -181,6 +181,77 @@ function CourseDetailPage() {
                 </div>
               )) : <p className="text-sm text-muted-foreground">No lessons published yet.</p>}
             </div>
+
+            {quizzes && quizzes.length > 0 && (
+              <>
+                <h2 className="mt-10 font-display text-xl font-bold">Quizzes</h2>
+                <div className="mt-4 space-y-2">
+                  {quizzes.map((q) => {
+                    const myAttempts = (attempts ?? []).filter((a) => a.quiz_id === q.id);
+                    const best = myAttempts.length
+                      ? myAttempts.reduce((m, a) => (a.score > m.score ? a : m))
+                      : null;
+                    const passed = best ? best.score >= q.passing_score : false;
+                    return (
+                      <div
+                        key={q.id}
+                        className="flex flex-wrap items-center gap-3 rounded-lg border border-border/50 bg-card p-4"
+                      >
+                        <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary/10 text-primary-glow">
+                          <ClipboardList className="h-4 w-4" />
+                        </div>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-medium">{q.title}</div>
+                          <div className="text-xs text-muted-foreground">
+                            Passing score {q.passing_score}%
+                            {best && (
+                              <>
+                                {" • "}
+                                Best {best.score}% • {myAttempts.length} attempt
+                                {myAttempts.length === 1 ? "" : "s"}
+                              </>
+                            )}
+                          </div>
+                        </div>
+                        {best && (
+                          <Badge
+                            variant={passed ? "default" : "destructive"}
+                            className={passed ? "bg-success text-success-foreground" : ""}
+                          >
+                            {passed ? (
+                              <>
+                                <Trophy className="mr-1 h-3 w-3" />
+                                Passed
+                              </>
+                            ) : (
+                              <>
+                                <XCircle className="mr-1 h-3 w-3" />
+                                Failed
+                              </>
+                            )}
+                          </Badge>
+                        )}
+                        <Button
+                          asChild
+                          size="sm"
+                          variant={enrollment ? "default" : "outline"}
+                          className={enrollment ? "bg-gradient-primary" : ""}
+                          disabled={!user}
+                        >
+                          {user ? (
+                            <Link to="/student/quiz/$quizId" params={{ quizId: q.id }}>
+                              {best ? "Retake quiz" : "Take quiz"}
+                            </Link>
+                          ) : (
+                            <Link to="/login">Sign in to take</Link>
+                          )}
+                        </Button>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
           </div>
 
           <aside>
