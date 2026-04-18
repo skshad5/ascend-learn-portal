@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import { AvatarUpload } from "@/components/AvatarUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -19,6 +20,7 @@ function ProfilePage() {
   const qc = useQueryClient();
   const [fullName, setFullName] = useState("");
   const [bio, setBio] = useState("");
+  const [avatarUrl, setAvatarUrl] = useState("");
 
   const { data: profile } = useQuery({
     queryKey: ["profile", user?.id],
@@ -34,6 +36,7 @@ function ProfilePage() {
     if (profile) {
       setFullName(profile.full_name ?? "");
       setBio(profile.bio ?? "");
+      setAvatarUrl(profile.avatar_url ?? "");
     }
   }, [profile]);
 
@@ -42,7 +45,12 @@ function ProfilePage() {
       if (!user) return;
       const { error } = await supabase
         .from("profiles")
-        .update({ full_name: fullName, bio, updated_at: new Date().toISOString() })
+        .update({
+          full_name: fullName,
+          bio,
+          avatar_url: avatarUrl || null,
+          updated_at: new Date().toISOString(),
+        })
         .eq("id", user.id);
       if (error) throw error;
     },
@@ -66,7 +74,15 @@ function ProfilePage() {
       </div>
       <Card className="border-border/50 bg-card">
         <CardContent className="p-6">
-          <form onSubmit={handleSubmit} className="space-y-4">
+          <form onSubmit={handleSubmit} className="space-y-6">
+            <div className="space-y-2">
+              <Label>Avatar</Label>
+              <AvatarUpload
+                value={avatarUrl}
+                onChange={setAvatarUrl}
+                fallback={fullName || user?.email || ""}
+              />
+            </div>
             <div className="space-y-2">
               <Label>Email</Label>
               <Input value={user?.email ?? ""} disabled />
