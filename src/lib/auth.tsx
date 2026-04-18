@@ -33,35 +33,61 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    let active = true;
+
     // 1. Set up listener FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, newSession) => {
+      if (!active) return;
+
+      setLoading(true);
       setSession(newSession);
       setUser(newSession?.user ?? null);
+
       if (newSession?.user) {
         // defer to avoid recursion warning
         setTimeout(() => {
-          fetchRoles(newSession.user.id).then(setRoles);
+          fetchRoles(newSession.user.id)
+            .then((nextRoles) => {
+              if (!active) return;
+              setRoles(nextRoles);
+            })
+            .finally(() => {
+              if (!active) return;
+              setLoading(false);
+            });
         }, 0);
       } else {
         setRoles([]);
+        setLoading(false);
       }
     });
 
     // 2. THEN check existing session
     supabase.auth.getSession().then(({ data }) => {
+      if (!active) return;
+
       setSession(data.session);
       setUser(data.session?.user ?? null);
+
       if (data.session?.user) {
-        fetchRoles(data.session.user.id).then((r) => {
-          setRoles(r);
-          setLoading(false);
-        });
+        fetchRoles(data.session.user.id)
+          .then((r) => {
+            if (!active) return;
+            setRoles(r);
+          })
+          .finally(() => {
+            if (!active) return;
+            setLoading(false);
+          });
       } else {
         setLoading(false);
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      active = false;
+      subscription.unsubscribe();
+    };
   }, []);
 
   const hasRole = (role: AppRole) => roles.includes(role);
