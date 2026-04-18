@@ -3,12 +3,13 @@ import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar";
 import { DashboardSidebar, type DashboardNavItem } from "@/components/DashboardSidebar";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/lib/auth";
-import { LayoutDashboard, BookOpen, PlusCircle, LogOut } from "lucide-react";
+import { LayoutDashboard, BookOpen, PlusCircle, BarChart3, LogOut } from "lucide-react";
 
 const items: DashboardNavItem[] = [
   { title: "Dashboard", path: "/instructor/dashboard", icon: LayoutDashboard },
   { title: "My Courses", path: "/instructor/courses", icon: BookOpen },
   { title: "New Course", path: "/instructor/courses/new", icon: PlusCircle },
+  { title: "Quiz Analytics", path: "/instructor/analytics", icon: BarChart3 },
 ];
 
 export const Route = createFileRoute("/instructor")({
