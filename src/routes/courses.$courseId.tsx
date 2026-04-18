@@ -65,6 +65,36 @@ function CourseDetailPage() {
     },
   });
 
+  const { data: quizzes } = useQuery({
+    queryKey: ["course-quizzes", courseId],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("quizzes")
+        .select("id, title, passing_score")
+        .eq("course_id", courseId)
+        .order("created_at");
+      if (error) throw error;
+      return data;
+    },
+  });
+
+  const quizIds = (quizzes ?? []).map((q) => q.id);
+  const { data: attempts } = useQuery({
+    queryKey: ["course-quiz-attempts", courseId, user?.id, quizIds.join(",")],
+    enabled: !!user && quizIds.length > 0,
+    queryFn: async () => {
+      if (!user || quizIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from("quiz_attempts")
+        .select("id, quiz_id, score, submitted_at")
+        .eq("user_id", user.id)
+        .in("quiz_id", quizIds)
+        .order("submitted_at", { ascending: false });
+      if (error) throw error;
+      return data;
+    },
+  });
+
   const enroll = useMutation({
     mutationFn: async () => {
       if (!user) throw new Error("Not authenticated");
