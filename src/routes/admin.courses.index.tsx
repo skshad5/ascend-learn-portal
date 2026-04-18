@@ -16,7 +16,7 @@ import { CheckCircle2, Pencil, Search, Trash2, XCircle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/admin/courses")({
+export const Route = createFileRoute("/admin/courses/")({
   component: AdminCoursesPage,
 });
 
