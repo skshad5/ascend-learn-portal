@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ThumbnailUpload } from "@/components/ThumbnailUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
 import { toast } from "sonner";
@@ -96,10 +97,7 @@ function NewCoursePage() {
               <Label htmlFor="desc">Description</Label>
               <Textarea id="desc" rows={4} value={description} onChange={(e) => setDescription(e.target.value)} />
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="thumb">Thumbnail URL (optional)</Label>
-              <Input id="thumb" type="url" placeholder="https://..." value={thumbnail} onChange={(e) => setThumbnail(e.target.value)} />
-            </div>
+            <ThumbnailUpload value={thumbnail} onChange={setThumbnail} />
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Category</Label>

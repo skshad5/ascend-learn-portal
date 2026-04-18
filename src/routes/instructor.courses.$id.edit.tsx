@@ -8,6 +8,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { ThumbnailUpload } from "@/components/ThumbnailUpload";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -89,7 +90,7 @@ function EditCoursePage() {
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2"><Label>Title</Label><Input required value={title} onChange={(e) => setTitle(e.target.value)} /></div>
             <div className="space-y-2"><Label>Description</Label><Textarea rows={4} value={description} onChange={(e) => setDescription(e.target.value)} /></div>
-            <div className="space-y-2"><Label>Thumbnail URL</Label><Input type="url" value={thumbnail} onChange={(e) => setThumbnail(e.target.value)} /></div>
+            <ThumbnailUpload value={thumbnail} onChange={setThumbnail} />
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
                 <Label>Category</Label>
