@@ -244,6 +244,57 @@ function StudentDashboard() {
           />
         )}
       </div>
+
+      {/* Certificates */}
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-display text-xl font-bold">Certificates</h2>
+        </div>
+        {certsLoading ? (
+          <DashboardSkeleton count={2} />
+        ) : certificates && certificates.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {certificates.map((c) => (
+              <Card key={c.courseId} className="overflow-hidden border-border/50 bg-card">
+                <div className="relative aspect-video bg-gradient-primary">
+                  {c.thumbnail && (
+                    <img
+                      src={c.thumbnail}
+                      alt={c.title}
+                      className="h-full w-full object-cover opacity-80"
+                    />
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-background/80 to-transparent">
+                    <Award className="h-10 w-10 text-success drop-shadow" />
+                  </div>
+                </div>
+                <CardContent className="space-y-3 p-4">
+                  <div>
+                    <h3 className="line-clamp-1 font-semibold">{c.title}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Completed {c.completedAt.toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handleDownload(c)}
+                    variant="outline"
+                    className="w-full border-success/40 bg-success/10 text-success hover:bg-success/15 hover:text-success"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download certificate
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={Award}
+            title="No certificates yet"
+            description="Complete every lesson and pass every quiz in a course to earn a certificate."
+          />
+        )}
+      </div>
     </div>
   );
 }
