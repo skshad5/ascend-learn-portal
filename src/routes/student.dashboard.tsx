@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { BookOpen, ClipboardList, PlayCircle, Trophy, XCircle } from "lucide-react";
+import { Award, BookOpen, ClipboardList, Download, PlayCircle, Trophy, XCircle } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -9,7 +9,10 @@ import { EmptyState } from "@/components/EmptyState";
 import { DashboardSkeleton } from "@/components/skeletons";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/lib/auth";
+import { useProfile } from "@/hooks/use-profile";
+import { generateCertificate } from "@/lib/certificate";
 import { studentEnrollmentsQueryOptions } from "@/lib/queries";
+import { toast } from "sonner";
 
 export const Route = createFileRoute("/student/dashboard")({
   component: StudentDashboard,
@@ -17,8 +20,102 @@ export const Route = createFileRoute("/student/dashboard")({
 
 function StudentDashboard() {
   const { user } = useAuth();
+  const { data: profile } = useProfile();
 
   const { data: enrolled, isLoading } = useQuery(studentEnrollmentsQueryOptions(user?.id));
+
+  const enrolledCourseIds = (enrolled ?? []).map((e) => e.course_id);
+  const { data: certificates, isLoading: certsLoading } = useQuery({
+    queryKey: ["my-certificates", user?.id, enrolledCourseIds.join(",")],
+    enabled: !!user && enrolledCourseIds.length > 0,
+    queryFn: async () => {
+      if (!user || enrolledCourseIds.length === 0) return [];
+
+      const { data: quizzes } = await supabase
+        .from("quizzes")
+        .select("id, course_id, passing_score")
+        .in("course_id", enrolledCourseIds);
+
+      const quizIds = (quizzes ?? []).map((q) => q.id);
+      const { data: attempts } = quizIds.length
+        ? await supabase
+            .from("quiz_attempts")
+            .select("quiz_id, score")
+            .eq("user_id", user.id)
+            .in("quiz_id", quizIds)
+        : { data: [] };
+
+      const bestByQuiz = new Map<string, number>();
+      for (const a of attempts ?? []) {
+        const prev = bestByQuiz.get(a.quiz_id);
+        if (prev === undefined || a.score > prev) bestByQuiz.set(a.quiz_id, a.score);
+      }
+
+      const completed: {
+        courseId: string;
+        title: string;
+        thumbnail: string | null;
+        instructorName: string;
+        completedAt: Date;
+      }[] = [];
+
+      for (const e of enrolled ?? []) {
+        if (e.total === 0 || e.completed < e.total) continue;
+        const courseQuizzes = (quizzes ?? []).filter((q) => q.course_id === e.course_id);
+        const allPassed = courseQuizzes.every((q) => {
+          const best = bestByQuiz.get(q.id);
+          return best !== undefined && best >= q.passing_score;
+        });
+        if (!allPassed) continue;
+
+        const course = e.course as {
+          id: string;
+          title: string;
+          thumbnail: string | null;
+        } | null;
+        if (!course) continue;
+
+        const { data: courseRow } = await supabase
+          .from("courses")
+          .select("instructor_id")
+          .eq("id", e.course_id)
+          .maybeSingle();
+        let instructorName = "Instructor";
+        if (courseRow?.instructor_id) {
+          const { data: prof } = await supabase
+            .from("profiles")
+            .select("full_name")
+            .eq("id", courseRow.instructor_id)
+            .maybeSingle();
+          instructorName = prof?.full_name || "Instructor";
+        }
+
+        completed.push({
+          courseId: e.course_id,
+          title: course.title,
+          thumbnail: course.thumbnail,
+          instructorName,
+          completedAt: new Date(e.enrolled_at),
+        });
+      }
+
+      return completed;
+    },
+  });
+
+  const handleDownload = (c: {
+    title: string;
+    instructorName: string;
+    completedAt: Date;
+  }) => {
+    generateCertificate({
+      studentName: profile?.full_name || user?.email || "Student",
+      courseTitle: c.title,
+      instructorName: c.instructorName,
+      completionDate: c.completedAt,
+    });
+    toast.success("Certificate downloaded!");
+  };
 
   const { data: quizAttempts, isLoading: attemptsLoading } = useQuery({
     queryKey: ["my-quiz-attempts", user?.id],
@@ -144,6 +241,57 @@ function StudentDashboard() {
             icon={ClipboardList}
             title="No quiz attempts yet"
             description="Take a quiz from one of your enrolled courses to see your scores here."
+          />
+        )}
+      </div>
+
+      {/* Certificates */}
+      <div>
+        <div className="mb-3 flex items-center justify-between">
+          <h2 className="font-display text-xl font-bold">Certificates</h2>
+        </div>
+        {certsLoading ? (
+          <DashboardSkeleton count={2} />
+        ) : certificates && certificates.length > 0 ? (
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            {certificates.map((c) => (
+              <Card key={c.courseId} className="overflow-hidden border-border/50 bg-card">
+                <div className="relative aspect-video bg-gradient-primary">
+                  {c.thumbnail && (
+                    <img
+                      src={c.thumbnail}
+                      alt={c.title}
+                      className="h-full w-full object-cover opacity-80"
+                    />
+                  )}
+                  <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-t from-background/80 to-transparent">
+                    <Award className="h-10 w-10 text-success drop-shadow" />
+                  </div>
+                </div>
+                <CardContent className="space-y-3 p-4">
+                  <div>
+                    <h3 className="line-clamp-1 font-semibold">{c.title}</h3>
+                    <p className="text-xs text-muted-foreground">
+                      Completed {c.completedAt.toLocaleDateString()}
+                    </p>
+                  </div>
+                  <Button
+                    onClick={() => handleDownload(c)}
+                    variant="outline"
+                    className="w-full border-success/40 bg-success/10 text-success hover:bg-success/15 hover:text-success"
+                  >
+                    <Download className="mr-2 h-4 w-4" />
+                    Download certificate
+                  </Button>
+                </CardContent>
+              </Card>
+            ))}
+          </div>
+        ) : (
+          <EmptyState
+            icon={Award}
+            title="No certificates yet"
+            description="Complete every lesson and pass every quiz in a course to earn a certificate."
           />
         )}
       </div>

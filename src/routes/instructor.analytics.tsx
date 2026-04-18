@@ -1,6 +1,6 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useQuery } from "@tanstack/react-query";
-import { ClipboardList, TrendingUp, Users, Trophy } from "lucide-react";
+import { ChevronRight, ClipboardList, TrendingUp, Users, Trophy } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
@@ -134,41 +134,49 @@ function InstructorAnalyticsPage() {
       ) : (
         <div className="space-y-3">
           {quizzes.map((q) => (
-            <Card key={q.id} className="border-border/50 bg-card">
-              <CardContent className="space-y-3 p-5">
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <div className="flex items-center gap-2">
-                      <h3 className="font-display text-lg font-semibold">{q.title}</h3>
-                      <Badge variant="outline">Pass {q.passing_score}%</Badge>
+            <Link
+              key={q.id}
+              to="/instructor/analytics/$quizId"
+              params={{ quizId: q.id }}
+              className="block transition-transform hover:-translate-y-0.5"
+            >
+              <Card className="border-border/50 bg-card transition-colors hover:border-primary/40">
+                <CardContent className="space-y-3 p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-display text-lg font-semibold">{q.title}</h3>
+                        <Badge variant="outline">Pass {q.passing_score}%</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{q.course_title}</p>
                     </div>
-                    <p className="text-sm text-muted-foreground">{q.course_title}</p>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <span>{q.attempts} attempts</span>
+                      <span>•</span>
+                      <span>{q.uniqueStudents} students</span>
+                      <ChevronRight className="h-4 w-4" />
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                    <span>{q.attempts} attempts</span>
-                    <span>•</span>
-                    <span>{q.uniqueStudents} students</span>
-                  </div>
-                </div>
 
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div>
-                    <div className="mb-1 flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Average score</span>
-                      <span className="font-medium">{q.averageScore}%</span>
+                  <div className="grid gap-4 sm:grid-cols-2">
+                    <div>
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Average score</span>
+                        <span className="font-medium">{q.averageScore}%</span>
+                      </div>
+                      <Progress value={q.averageScore} className="h-2" />
                     </div>
-                    <Progress value={q.averageScore} className="h-2" />
-                  </div>
-                  <div>
-                    <div className="mb-1 flex items-center justify-between text-xs">
-                      <span className="text-muted-foreground">Pass rate</span>
-                      <span className="font-medium">{q.passRate}%</span>
+                    <div>
+                      <div className="mb-1 flex items-center justify-between text-xs">
+                        <span className="text-muted-foreground">Pass rate</span>
+                        <span className="font-medium">{q.passRate}%</span>
+                      </div>
+                      <Progress value={q.passRate} className="h-2" />
                     </div>
-                    <Progress value={q.passRate} className="h-2" />
                   </div>
-                </div>
-              </CardContent>
-            </Card>
+                </CardContent>
+              </Card>
+            </Link>
           ))}
         </div>
       )}
